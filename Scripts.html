@@ -15,19 +15,45 @@
                 runner.fetchBooking(payload.query);
             }
         } else {
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: action, payload: payload })
-            })
-            .then(res => {
-                if (!res.ok) throw new Error('Network response was not ok');
-                return res.json();
-            })
-            .then(data => onSuccess(data))
-            .catch(err => {
-                console.error('API Error:', err);
-                onFailure(err);
-            });
+            // Running on GitHub Pages / external domain
+            if (action === 'lookupFlight') {
+                const params = new URLSearchParams({
+                    action: 'lookupFlight',
+                    flightNo: payload.flightNo,
+                    date: payload.date || '',
+                    prefix: payload.prefix || ''
+                });
+                fetch(SCRIPT_URL + '?' + params.toString())
+                    .then(res => res.json())
+                    .then(data => onSuccess(data))
+                    .catch(err => {
+                        console.error('API Error:', err);
+                        onFailure(err);
+                    });
+            } else if (action === 'fetchBooking') {
+                const params = new URLSearchParams({
+                    action: 'fetchBooking',
+                    query: payload.query || ''
+                });
+                fetch(SCRIPT_URL + '?' + params.toString())
+                    .then(res => res.json())
+                    .then(data => onSuccess(data))
+                    .catch(err => {
+                        console.error('API Error:', err);
+                        onFailure(err);
+                    });
+            } else {
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: action, payload: payload })
+                })
+                .then(res => res.json())
+                .then(data => onSuccess(data))
+                .catch(err => {
+                    console.error('API Error:', err);
+                    onFailure(err);
+                });
+            }
         }
     }
 

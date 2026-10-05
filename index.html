@@ -297,6 +297,62 @@
 
     <script>
     let additionalGuestCount = 0;
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrST1QfHkO_FA6QXpeXSPhAvlpr5iyZFvcvB7-cTskzQbTtecfrxWlpnN81YICQIS9yQ/exec';
+
+    function runApi(action, payload, onSuccess, onFailure) {
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+            const runner = google.script.run
+                .withSuccessHandler(onSuccess)
+                .withFailureHandler(onFailure);
+            if (action === 'lookupFlight') {
+                runner.lookupFlight(payload.flightNo, payload.date, payload.prefix);
+            } else if (action === 'processForm') {
+                runner.processForm(payload);
+            } else if (action === 'fetchBooking') {
+                runner.fetchBooking(payload.query);
+            }
+        } else {
+            // Running on GitHub Pages / external domain
+            if (action === 'lookupFlight') {
+                const params = new URLSearchParams({
+                    action: 'lookupFlight',
+                    flightNo: payload.flightNo,
+                    date: payload.date || '',
+                    prefix: payload.prefix || ''
+                });
+                fetch(SCRIPT_URL + '?' + params.toString())
+                    .then(res => res.json())
+                    .then(data => onSuccess(data))
+                    .catch(err => {
+                        console.error('API Error:', err);
+                        onFailure(err);
+                    });
+            } else if (action === 'fetchBooking') {
+                const params = new URLSearchParams({
+                    action: 'fetchBooking',
+                    query: payload.query || ''
+                });
+                fetch(SCRIPT_URL + '?' + params.toString())
+                    .then(res => res.json())
+                    .then(data => onSuccess(data))
+                    .catch(err => {
+                        console.error('API Error:', err);
+                        onFailure(err);
+                    });
+            } else {
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: action, payload: payload })
+                })
+                .then(res => res.json())
+                .then(data => onSuccess(data))
+                .catch(err => {
+                    console.error('API Error:', err);
+                    onFailure(err);
+                });
+            }
+        }
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
         const logo = document.getElementById('header-dp-logo');
@@ -454,8 +510,8 @@
             `;
         }
         
-        google.script.run
-            .withSuccessHandler(function(res) {
+        runApi('lookupFlight', { flightNo: cleanFlightNo, date: flightDate, prefix: prefix },
+            function(res) {
                 if (loadingEl) loadingEl.classList.add('hidden');
                 if (!res) return;
                 
@@ -559,8 +615,8 @@
                         `;
                     }
                 }
-            })
-            .withFailureHandler(function(err) {
+            },
+            function(err) {
                 if (loadingEl) loadingEl.classList.add('hidden');
                 if (bannerEl) {
                     bannerEl.innerHTML = `
@@ -570,8 +626,8 @@
                         </div>
                     `;
                 }
-            })
-            .lookupFlight(cleanFlightNo, flightDate, prefix);
+            }
+        );
     }
 
     // Tab Switching Logic
@@ -740,8 +796,8 @@
                 }
             }
 
-            google.script.run
-                .withSuccessHandler(function(response) {
+            runApi('processForm', formData,
+                function(response) {
                     btn.disabled = false;
                     btnText.innerText = document.getElementById('groupId').value ? 'Save Changes' : 'Submit Details';
                     loader.classList.add('hidden');
@@ -763,8 +819,8 @@
                         msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-red-50 text-red-700';
                         msgEl.innerText = 'Error: ' + response.message;
                     }
-                })
-                .withFailureHandler(function(error) {
+                },
+                function(error) {
                     btn.disabled = false;
                     btnText.innerText = document.getElementById('groupId').value ? 'Save Changes' : 'Submit Details';
                     loader.classList.add('hidden');
@@ -772,8 +828,8 @@
                     msgEl.classList.remove('hidden');
                     msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-red-50 text-red-700';
                     msgEl.innerText = 'Connection error. Please try again.';
-                })
-                .processForm(formData);
+                }
+            );
 
         } catch (err) {
             btn.disabled = false;
@@ -801,8 +857,8 @@
         loader.classList.remove('hidden');
         resultEl.classList.add('hidden');
 
-        google.script.run
-            .withSuccessHandler(function(response) {
+        runApi('fetchBooking', { query: query },
+            function(response) {
                 btn.disabled = false;
                 btnText.innerText = 'Find Booking';
                 loader.classList.add('hidden');
@@ -853,8 +909,8 @@
                     
                     resultEl.innerHTML = html;
                 }
-            })
-            .withFailureHandler(function(error) {
+            },
+            function(error) {
                 btn.disabled = false;
                 btnText.innerText = 'Find Booking';
                 loader.classList.add('hidden');
@@ -865,8 +921,8 @@
                         Connection error. Please try again later.
                     </div>
                 `;
-            })
-            .fetchBooking(query);
+            }
+        );
     }
 
     // Populate Form for Editing
@@ -958,6 +1014,7 @@
         document.getElementById('submitMessage').classList.add('hidden');
     }
 </script>
+
 
 </body>
 </html>
