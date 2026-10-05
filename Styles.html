@@ -1,0 +1,68 @@
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    sans: ['Inter', 'sans-serif'],
+                    serif: ['Playfair Display', 'serif'],
+                },
+                colors: {
+                    'wedding-pink': {
+                        50: '#fdf4f6',
+                        100: '#fce7ed',
+                        200: '#f8c8d8',
+                        500: '#f4a6bc',
+                        600: '#e889a3',
+                        900: '#8c3550',
+                    },
+                    'wedding-green': {
+                        50: '#f4f7f4',
+                        100: '#e5eee6',
+                        200: '#d2e4c8',
+                        500: '#9bb083',
+                        600: '#7d9365',
+                        900: '#3a472c',
+                    }
+                }
+            }
+        }
+    }
+</script>
+<style>
+    body {
+        background: linear-gradient(135deg, #f8c8d8 0%, #d2e4c8 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        position: relative;
+    }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 8px 32px 0 rgba(155, 176, 131, 0.2);
+    }
+    .fade-in {
+        animation: fadeIn 0.4s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .loader {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #7d9365;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>

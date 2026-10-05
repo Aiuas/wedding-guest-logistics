@@ -1,0 +1,10 @@
+*.gs
+.clasp.json
+.claspignore
+appsscript.json
+check.js
+*.pdf
+*.txt
+*.png
+*.jpeg
+*.svg

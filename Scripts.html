@@ -1,0 +1,693 @@
+<script>
+    let additionalGuestCount = 0;
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrST1QfHkO_FA6QXpeXSPhAvlpr5iyZFvcvB7-cTskzQbTtecfrxWlpnN81YICQIS9yQ/exec';
+
+    function runApi(action, payload, onSuccess, onFailure) {
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+            const runner = google.script.run
+                .withSuccessHandler(onSuccess)
+                .withFailureHandler(onFailure);
+            if (action === 'lookupFlight') {
+                runner.lookupFlight(payload.flightNo, payload.date, payload.prefix);
+            } else if (action === 'processForm') {
+                runner.processForm(payload);
+            } else if (action === 'fetchBooking') {
+                runner.fetchBooking(payload.query);
+            }
+        } else {
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: action, payload: payload })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Network response was not ok');
+                return res.json();
+            })
+            .then(data => onSuccess(data))
+            .catch(err => {
+                console.error('API Error:', err);
+                onFailure(err);
+            });
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const logo = document.getElementById('header-dp-logo');
+        const wp = document.getElementById('dp-wallpaper-logo');
+        if (logo && wp && !wp.getAttribute('href')) {
+            wp.setAttribute('href', logo.src);
+        }
+        if (!document.getElementById('arrDate').value) {
+            document.getElementById('arrDate').value = '2026-11-24';
+        }
+        if (!document.getElementById('depDate').value) {
+            document.getElementById('depDate').value = '2026-11-26';
+        }
+        validateContactFields();
+        toggleTransportFields('arr');
+        toggleTransportFields('dep');
+    });
+
+    // Contact Validation: WhatsApp or Email required (at least one)
+    function validateContactFields() {
+        const wa = document.getElementById('whatsapp');
+        const em = document.getElementById('email');
+        if (!wa || !em) return true;
+        const hasContact = wa.value.trim() !== '' || em.value.trim() !== '';
+        if (hasContact) {
+            wa.setCustomValidity('');
+            return true;
+        } else {
+            wa.setCustomValidity('Please provide either a WhatsApp number or an Email address.');
+            return false;
+        }
+    }
+
+    // Toggle Transport Fields (Arrival or Departure)
+    function toggleTransportFields(type) {
+        const mode = document.querySelector(`input[name="${type}Mode"]:checked`).value;
+        const container = document.getElementById(`dynamic${type === 'arr' ? 'Arr' : 'Dep'}Fields`);
+        const prefix = type; // 'arr' or 'dep'
+        
+        if (mode === 'Flight') {
+            container.innerHTML = `
+                <div class="md:col-span-2" id="${prefix}FlightStatusBanner">
+                    <p class="text-xs text-gray-500 flex items-center gap-1.5 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                        <span>✈️</span> Enter your flight number and date to automatically fetch scheduled timings, airport & terminal.
+                    </p>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-sm font-medium">Flight Number *</label>
+                        <span id="${prefix}FlightLoading" class="text-xs text-wedding-green-700 hidden font-medium flex items-center gap-1">
+                            <svg class="animate-spin h-3.5 w-3.5 text-wedding-green-600 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            Checking flight...
+                        </span>
+                    </div>
+                    <div class="relative">
+                        <input type="text" id="${prefix}No" required placeholder="e.g. 6E 4935 or AI 101" 
+                               oninput="onFlightInputChanged('${prefix}')" 
+                               onblur="triggerFlightLookup('${prefix}')"
+                               class="w-full rounded-lg border-gray-300 border p-2.5 pr-24 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none transition-colors uppercase font-mono text-sm tracking-wider">
+                        <button type="button" onclick="triggerFlightLookup('${prefix}')" 
+                                class="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-wedding-green-100 hover:bg-wedding-green-200 text-wedding-green-800 rounded-md text-xs font-medium transition-colors flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <span>Auto-fill</span>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Airport *</label>
+                    <select id="${prefix}Loc" required class="w-full rounded-lg border-gray-300 border p-2.5 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none transition-colors bg-white">
+                        <option value="">Select Airport...</option>
+                        <option value="Ahmedabad (AMD)">Ahmedabad (AMD)</option>
+                        <option value="Surat (STV)">Surat (STV)</option>
+                        <option value="Vadodara (BDQ)">Vadodara (BDQ)</option>
+                        <option value="Rajkot (RAJ)">Rajkot (RAJ)</option>
+                        <option value="Bhuj (BHJ)">Bhuj (BHJ)</option>
+                        <option value="Jamnagar (JGA)">Jamnagar (JGA)</option>
+                        <option value="Bhavnagar (BHU)">Bhavnagar (BHU)</option>
+                        <option value="Porbandar (PBD)">Porbandar (PBD)</option>
+                        <option value="Mumbai (BOM)">Mumbai (BOM)</option>
+                        <option value="Delhi (DEL)">Delhi (DEL)</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-1">Terminal (Optional)</label>
+                    <input type="text" id="${prefix}Term" placeholder="e.g. T1 or T2" class="w-full rounded-lg border-gray-300 border p-2.5 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none transition-colors">
+                </div>
+            `;
+        } else if (mode === 'Train') {
+            container.innerHTML = `
+                <div>
+                    <label class="block text-sm font-medium mb-1">Train Name / Number *</label>
+                    <input type="text" id="${prefix}No" required placeholder="e.g. 12952 Rajdhani" class="w-full rounded-lg border-gray-300 border p-2.5 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none transition-colors">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Station Name *</label>
+                    <input type="text" id="${prefix}Loc" required placeholder="e.g. Ahmedabad Junction" class="w-full rounded-lg border-gray-300 border p-2.5 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none transition-colors">
+                </div>
+                <input type="hidden" id="${prefix}Term" value="N/A">
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-1">Location / Notes *</label>
+                    <input type="text" id="${prefix}Loc" required placeholder="e.g. Personal car to Hotel ABC" class="w-full rounded-lg border-gray-300 border p-2.5 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none transition-colors">
+                </div>
+                <input type="hidden" id="${prefix}No" value="N/A">
+                <input type="hidden" id="${prefix}Term" value="N/A">
+            `;
+        }
+    }
+
+    // Live Flight Tracking & Auto-Fill
+    let flightDebounceTimers = { arr: null, dep: null };
+    let lastLookedUpFlights = { arr: '', dep: '' };
+
+    function onFlightInputChanged(prefix) {
+        clearTimeout(flightDebounceTimers[prefix]);
+        flightDebounceTimers[prefix] = setTimeout(() => {
+            triggerFlightLookup(prefix);
+        }, 700);
+    }
+
+    function onFlightDateChanged(prefix) {
+        const modeEl = document.querySelector(`input[name="${prefix}Mode"]:checked`);
+        if (modeEl && modeEl.value === 'Flight') {
+            triggerFlightLookup(prefix);
+        }
+    }
+
+    function triggerFlightLookup(prefix) {
+        const flightInput = document.getElementById(`${prefix}No`);
+        const dateInput = document.getElementById(`${prefix}Date`);
+        const loadingEl = document.getElementById(`${prefix}FlightLoading`);
+        const bannerEl = document.getElementById(`${prefix}FlightStatusBanner`);
+        const hiddenStatusEl = document.getElementById(`${prefix}FlightStatus`);
+        
+        if (!flightInput || !dateInput) return;
+        
+        const rawFlightNo = flightInput.value.trim().toUpperCase();
+        const cleanFlightNo = rawFlightNo.replace(/[^A-Z0-9]/g, '');
+        const flightDate = dateInput.value;
+        
+        if (cleanFlightNo.length < 3) return;
+        
+        const lookupKey = `${prefix}_${cleanFlightNo}_${flightDate}`;
+        if (lastLookedUpFlights[prefix] === lookupKey) return;
+        
+        if (loadingEl) loadingEl.classList.remove('hidden');
+        if (bannerEl) {
+            bannerEl.innerHTML = `
+                <div class="p-2.5 bg-blue-50 rounded-lg border border-blue-100 text-xs text-blue-800 flex items-center gap-2">
+                    <svg class="animate-spin h-3.5 w-3.5 text-blue-600 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span>Fetching live timetable for <strong>${cleanFlightNo}</strong>...</span>
+                </div>
+            `;
+        }
+        
+        runApi('lookupFlight', { flightNo: cleanFlightNo, date: flightDate, prefix: prefix },
+            function(res) {
+                if (loadingEl) loadingEl.classList.add('hidden');
+                if (!res) return;
+                
+                if (res.success) {
+                    lastLookedUpFlights[prefix] = lookupKey;
+                    
+                    // Auto-fill time
+                    const timeInput = document.getElementById(`${prefix}Time`);
+                    if (timeInput && res.time) {
+                        timeInput.value = res.time;
+                        timeInput.classList.add('bg-green-50');
+                        setTimeout(() => timeInput.classList.remove('bg-green-50'), 1500);
+                    }
+                    
+                    // Auto-fill terminal
+                    const termInput = document.getElementById(`${prefix}Term`);
+                    if (termInput && res.terminal) {
+                        termInput.value = res.terminal;
+                    }
+                    
+                    // Auto-select airport if matched or add option
+                    const locSelect = document.getElementById(`${prefix}Loc`);
+                    if (locSelect && (res.airportIata || res.airportName)) {
+                        let matched = false;
+                        for (let opt of locSelect.options) {
+                            if (res.airportIata && opt.value.toUpperCase().includes(res.airportIata)) {
+                                locSelect.value = opt.value;
+                                matched = true;
+                                break;
+                            }
+                        }
+                        if (!matched && (res.airportIata || res.airportName)) {
+                            const optVal = `${res.airportName || ''} (${res.airportIata || ''})`.trim();
+                            const newOpt = document.createElement('option');
+                            newOpt.value = optVal;
+                            newOpt.textContent = optVal;
+                            locSelect.appendChild(newOpt);
+                            locSelect.value = optVal;
+                        }
+                    }
+                    
+                    // Store status in hidden input
+                    if (hiddenStatusEl && res.statusSummary) {
+                        hiddenStatusEl.value = res.displayBadge || res.statusSummary;
+                    }
+                    
+                    // Render success badge with operating carrier and potential codeshares
+                    if (bannerEl) {
+                        const codesharePills = (res.codeshares && res.codeshares.length > 0)
+                            ? `
+                                <div class="mt-2.5 pt-2 border-t border-wedding-green-200/70 text-xs">
+                                    <div class="text-wedding-green-800 font-medium mb-1.5 flex items-center gap-1">
+                                        <span>🤝 Potential Codeshares (${res.codeshares.length}):</span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        ${res.codeshares.map(cs => `
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded bg-white/90 border border-wedding-green-300 text-wedding-green-900 font-mono text-[11px] shadow-2xs">
+                                                ${cs}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `
+                            : '';
+
+                        const opCarrierHtml = res.operatingCarrier
+                            ? `<div class="text-wedding-green-800 text-xs mt-0.5 font-medium flex items-center gap-1.5"><span>ℹ️ Operated by:</span> <strong>${res.operatingCarrier}</strong></div>`
+                            : '';
+
+                        const routeBadge = (res.originIata && res.destinationIata)
+                            ? `<span class="text-xs px-2 py-0.5 bg-wedding-green-100/90 text-wedding-green-900 rounded-full font-mono">${res.originIata} → ${res.destinationIata}</span>`
+                            : '';
+
+                        bannerEl.innerHTML = `
+                            <div class="p-3 bg-wedding-green-50 rounded-lg border border-wedding-green-200 text-xs text-wedding-green-900 flex items-start gap-2.5 shadow-2xs">
+                                <span class="text-base leading-none">🟢</span>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-wedding-green-900 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+                                        <span>✈️ ${res.airline || res.flightNumber} (${res.flightNumber})</span>
+                                        ${routeBadge}
+                                        <span class="text-xs font-normal text-wedding-green-800">• ${res.statusSummary}</span>
+                                    </div>
+                                    ${opCarrierHtml}
+                                    <div class="text-wedding-green-700 mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+                                        <span>✓ Time: <strong>${res.time}</strong></span>
+                                        ${res.terminal ? `<span>✓ Terminal: <strong>${res.terminal}</strong></span>` : ''}
+                                        ${res.airportIata ? `<span>✓ Airport: <strong>${res.airportIata}</strong></span>` : ''}
+                                    </div>
+                                    ${codesharePills}
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    if (bannerEl) {
+                        bannerEl.innerHTML = `
+                            <div class="p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-800 flex items-center gap-2">
+                                <span>ℹ️</span>
+                                <span>${res.message || "Could not find flight. You can enter timings manually."}</span>
+                            </div>
+                        `;
+                    }
+                }
+            },
+            function(err) {
+                if (loadingEl) loadingEl.classList.add('hidden');
+                if (bannerEl) {
+                    bannerEl.innerHTML = `
+                        <div class="p-2.5 bg-gray-50 rounded-lg border border-gray-200 text-xs text-gray-600 flex items-center gap-2">
+                            <span>ℹ️</span>
+                            <span>Auto-fill currently unavailable. Please enter timings manually.</span>
+                        </div>
+                    `;
+                }
+            }
+        );
+    }
+
+    // Tab Switching Logic
+    function switchTab(tab) {
+        const submitView = document.getElementById('view-submit');
+        const statusView = document.getElementById('view-status');
+        const submitTabBtn = document.getElementById('tab-submit');
+        const statusTabBtn = document.getElementById('tab-status');
+
+        if (tab === 'submit') {
+            submitView.classList.remove('hidden');
+            statusView.classList.add('hidden');
+            submitTabBtn.classList.add('bg-white', 'shadow', 'text-wedding-green-900');
+            submitTabBtn.classList.remove('text-wedding-green-600');
+            statusTabBtn.classList.remove('bg-white', 'shadow', 'text-wedding-green-900');
+            statusTabBtn.classList.add('text-wedding-green-600');
+        } else {
+            submitView.classList.add('hidden');
+            statusView.classList.remove('hidden');
+            statusTabBtn.classList.add('bg-white', 'shadow', 'text-wedding-green-900');
+            statusTabBtn.classList.remove('text-wedding-green-600');
+            submitTabBtn.classList.remove('bg-white', 'shadow', 'text-wedding-green-900');
+            submitTabBtn.classList.add('text-wedding-green-600');
+        }
+    }
+
+    // Add Additional Guest Fields
+    function addGuest() {
+        additionalGuestCount++;
+        const container = document.getElementById('additionalGuestsContainer');
+        
+        const guestHtml = `
+            <div class="p-4 bg-wedding-green-50 rounded-xl relative border border-wedding-green-100" id="guest-${additionalGuestCount}">
+                <button type="button" onclick="removeGuest(${additionalGuestCount})" class="absolute top-2 right-2 text-gray-400 hover:text-red-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">First Name</label>
+                        <input type="text" id="addFirstName-${additionalGuestCount}" class="w-full rounded-lg border-gray-300 border p-2 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Last Name</label>
+                        <input type="text" id="addLastName-${additionalGuestCount}" class="w-full rounded-lg border-gray-300 border p-2 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">WhatsApp (Optional)</label>
+                        <input type="tel" id="addWhatsapp-${additionalGuestCount}" placeholder="+1 234 567 8900" class="w-full rounded-lg border-gray-300 border p-2 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Email (Optional)</label>
+                        <input type="email" id="addEmail-${additionalGuestCount}" placeholder="guest@example.com" class="w-full rounded-lg border-gray-300 border p-2 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Passport / ID Upload <span id="idRequiredStar-${additionalGuestCount}" class="hidden">*</span></label>
+                        <input type="hidden" id="addIdUrl-${additionalGuestCount}" value="">
+                        <input type="file" id="addId-${additionalGuestCount}" accept="image/*,.pdf" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-wedding-pink-100 file:text-wedding-pink-900 hover:file:bg-wedding-pink-500 hover:file:text-white transition-colors">
+                        <p id="idExistingNote-${additionalGuestCount}" class="text-xs text-wedding-green-600 mt-2 hidden">✓ ID already on file. Uploading a new one will replace it.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', guestHtml);
+    }
+
+    function removeGuest(id) {
+        const el = document.getElementById(`guest-${id}`);
+        if (el) el.remove();
+    }
+
+    function getBase64(file) {
+        return new Promise((resolve, reject) => {
+            if (!file) {
+                resolve(null);
+                return;
+            }
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve({
+                data: reader.result,
+                name: file.name,
+                mimeType: file.type
+            });
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Main Submit Form
+    async function submitForm(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('submitBtnText');
+        const loader = document.getElementById('submitLoader');
+        const msgEl = document.getElementById('submitMessage');
+
+        const emailVal = (document.getElementById('email') ? document.getElementById('email').value : '').trim();
+        const whatsappVal = (document.getElementById('whatsapp') ? document.getElementById('whatsapp').value : '').trim();
+
+        if (!emailVal && !whatsappVal) {
+            msgEl.classList.remove('hidden');
+            msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-red-50 text-red-700';
+            msgEl.innerText = 'Please provide either a WhatsApp number or an Email address.';
+            document.getElementById('whatsapp').focus();
+            return;
+        }
+        
+        btn.disabled = true;
+        btnText.innerText = 'Saving...';
+        loader.classList.remove('hidden');
+        msgEl.classList.add('hidden');
+
+        try {
+            const primaryFileEl = document.getElementById('primaryId');
+            const primaryFileObj = primaryFileEl.files.length > 0 ? await getBase64(primaryFileEl.files[0]) : null;
+
+            const formData = {
+                groupId: document.getElementById('groupId').value,
+                primaryFirstName: document.getElementById('primaryFirstName').value,
+                primaryLastName: document.getElementById('primaryLastName').value,
+                email: document.getElementById('email').value,
+                whatsapp: document.getElementById('whatsapp').value,
+                
+                primaryIdData: primaryFileObj ? primaryFileObj.data : null,
+                primaryIdName: primaryFileObj ? primaryFileObj.name : null,
+                primaryIdMimeType: primaryFileObj ? primaryFileObj.mimeType : null,
+                primaryIdUrl: document.getElementById('primaryIdUrl').value,
+                
+                arrMode: document.querySelector('input[name="arrMode"]:checked').value,
+                arrNo: document.getElementById('arrNo') ? document.getElementById('arrNo').value : '',
+                arrLoc: document.getElementById('arrLoc') ? document.getElementById('arrLoc').value : '',
+                arrTerm: document.getElementById('arrTerm') ? document.getElementById('arrTerm').value : '',
+                arrDate: document.getElementById('arrDate').value,
+                arrTime: document.getElementById('arrTime').value,
+                arrFlightStatus: document.getElementById('arrFlightStatus') ? document.getElementById('arrFlightStatus').value : '',
+
+                depMode: document.querySelector('input[name="depMode"]:checked').value,
+                depNo: document.getElementById('depNo') ? document.getElementById('depNo').value : '',
+                depLoc: document.getElementById('depLoc') ? document.getElementById('depLoc').value : '',
+                depTerm: document.getElementById('depTerm') ? document.getElementById('depTerm').value : '',
+                depDate: document.getElementById('depDate').value,
+                depTime: document.getElementById('depTime').value,
+                depFlightStatus: document.getElementById('depFlightStatus') ? document.getElementById('depFlightStatus').value : '',
+                
+                additionalGuests: []
+            };
+
+            for (let i = 1; i <= additionalGuestCount; i++) {
+                const firstNameEl = document.getElementById(`addFirstName-${i}`);
+                if (firstNameEl) {
+                    const idEl = document.getElementById(`addId-${i}`);
+                    const idUrlEl = document.getElementById(`addIdUrl-${i}`);
+                    const guestFileObj = (idEl && idEl.files.length > 0) ? await getBase64(idEl.files[0]) : null;
+                    
+                    formData.additionalGuests.push({
+                        firstName: firstNameEl.value,
+                        lastName: document.getElementById(`addLastName-${i}`).value,
+                        email: document.getElementById(`addEmail-${i}`).value,
+                        whatsapp: document.getElementById(`addWhatsapp-${i}`).value,
+                        idData: guestFileObj ? guestFileObj.data : null,
+                        idName: guestFileObj ? guestFileObj.name : null,
+                        idMimeType: guestFileObj ? guestFileObj.mimeType : null,
+                        idUrl: idUrlEl ? idUrlEl.value : ''
+                    });
+                }
+            }
+
+            runApi('processForm', formData,
+                function(response) {
+                    btn.disabled = false;
+                    btnText.innerText = document.getElementById('groupId').value ? 'Save Changes' : 'Submit Details';
+                    loader.classList.add('hidden');
+                    
+                    msgEl.classList.remove('hidden');
+                    if (response.success) {
+                        msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-green-50 text-green-700';
+                        msgEl.innerText = response.message;
+                        if (!formData.groupId) {
+                            document.getElementById('logisticsForm').reset();
+                            document.getElementById('arrDate').value = '2026-11-24';
+                            document.getElementById('depDate').value = '2026-11-26';
+                            document.getElementById('additionalGuestsContainer').innerHTML = '';
+                            validateContactFields();
+                            toggleTransportFields('arr');
+                            toggleTransportFields('dep');
+                        }
+                    } else {
+                        msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-red-50 text-red-700';
+                        msgEl.innerText = 'Error: ' + response.message;
+                    }
+                },
+                function(error) {
+                    btn.disabled = false;
+                    btnText.innerText = document.getElementById('groupId').value ? 'Save Changes' : 'Submit Details';
+                    loader.classList.add('hidden');
+                    
+                    msgEl.classList.remove('hidden');
+                    msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-red-50 text-red-700';
+                    msgEl.innerText = 'Connection error. Please try again.';
+                }
+            );
+
+        } catch (err) {
+            btn.disabled = false;
+            btnText.innerText = document.getElementById('groupId').value ? 'Save Changes' : 'Submit Details';
+            loader.classList.add('hidden');
+            
+            msgEl.classList.remove('hidden');
+            msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-red-50 text-red-700';
+            msgEl.innerText = 'Error processing files. Please ensure they are not too large.';
+        }
+    }
+
+    // Fetch Booking for Editing / Status
+    function checkStatus() {
+        const query = document.getElementById('statusQuery').value;
+        if (!query) return;
+
+        const btn = document.getElementById('statusBtn');
+        const btnText = document.getElementById('statusBtnText');
+        const loader = document.getElementById('statusLoader');
+        const resultEl = document.getElementById('statusResult');
+
+        btn.disabled = true;
+        btnText.innerText = 'Searching...';
+        loader.classList.remove('hidden');
+        resultEl.classList.add('hidden');
+
+        runApi('fetchBooking', { query: query },
+            function(response) {
+                btn.disabled = false;
+                btnText.innerText = 'Find Booking';
+                loader.classList.add('hidden');
+                
+                resultEl.classList.remove('hidden');
+                
+                if (!response.found) {
+                    resultEl.innerHTML = `
+                        <div class="p-4 bg-orange-50 rounded-xl border border-orange-100 text-orange-800 text-center">
+                            We couldn't find any details for that Email or WhatsApp number. Please check for typos.
+                        </div>
+                    `;
+                } else {
+                    // Render Status Block + Edit Button
+                    let html = `<div class="p-5 bg-green-50 rounded-xl border border-green-100 mb-4">`;
+                    html += `<h3 class="font-serif text-xl text-green-900 mb-3">Your Booking was found!</h3>`;
+                    
+                    // Show Arrival Status
+                    if (response.arrDriver) {
+                        const cleanArr = response.arrPhone ? response.arrPhone.toString().replace(/\\D/g,'') : '';
+                        html += `<div class="mb-4"><h4 class="font-semibold text-sm mb-1 text-green-800">🛬 Arrival Transport Organized</h4>
+                            <p class="text-sm text-green-700">Driver: ${response.arrDriver} | Car: ${response.arrCar}</p>
+                            ${cleanArr ? `<a href="https://wa.me/${cleanArr}" target="_blank" class="text-green-600 underline text-sm">WhatsApp Driver</a>` : ''}
+                            ${response.arrFlightStatus ? `<p class="text-xs text-green-800 mt-1 font-medium bg-green-100/60 p-1.5 rounded inline-block">✈️ ${response.arrFlightStatus}</p>` : ''}
+                            </div>`;
+                    } else {
+                        html += `<div class="mb-4"><h4 class="font-semibold text-sm mb-1 text-green-800">🛬 Arrival Transport: Pending</h4>
+                            ${response.arrFlightStatus ? `<p class="text-xs text-green-800 mt-1 font-medium bg-green-100/60 p-1.5 rounded inline-block">✈️ ${response.arrFlightStatus}</p>` : ''}
+                            </div>`;
+                    }
+                    
+                    // Show Departure Status
+                    if (response.depDriver) {
+                        const cleanDep = response.depPhone ? response.depPhone.toString().replace(/\\D/g,'') : '';
+                        html += `<div class="mb-4"><h4 class="font-semibold text-sm mb-1 text-green-800">🛫 Departure Transport Organized</h4>
+                            <p class="text-sm text-green-700">Driver: ${response.depDriver} | Car: ${response.depCar}</p>
+                            ${cleanDep ? `<a href="https://wa.me/${cleanDep}" target="_blank" class="text-green-600 underline text-sm">WhatsApp Driver</a>` : ''}
+                            ${response.depFlightStatus ? `<p class="text-xs text-green-800 mt-1 font-medium bg-green-100/60 p-1.5 rounded inline-block">✈️ ${response.depFlightStatus}</p>` : ''}
+                            </div>`;
+                    } else {
+                        html += `<div class="mb-4"><h4 class="font-semibold text-sm mb-1 text-green-800">🛫 Departure Transport: Pending</h4>
+                            ${response.depFlightStatus ? `<p class="text-xs text-green-800 mt-1 font-medium bg-green-100/60 p-1.5 rounded inline-block">✈️ ${response.depFlightStatus}</p>` : ''}
+                            </div>`;
+                    }
+                    
+                    html += `<button onclick='loadEditForm(${JSON.stringify(response)})' class="mt-4 w-full bg-white text-green-700 border border-green-200 py-2 rounded-lg font-medium hover:bg-green-100 transition-colors">Edit Booking Details</button>`;
+                    html += `</div>`;
+                    
+                    resultEl.innerHTML = html;
+                }
+            },
+            function(error) {
+                btn.disabled = false;
+                btnText.innerText = 'Find Booking';
+                loader.classList.add('hidden');
+                
+                resultEl.classList.remove('hidden');
+                resultEl.innerHTML = `
+                    <div class="p-4 bg-red-50 rounded-xl border border-red-100 text-red-800 text-center">
+                        Connection error. Please try again later.
+                    </div>
+                `;
+            }
+        );
+    }
+
+    // Populate Form for Editing
+    function loadEditForm(data) {
+        document.getElementById('groupId').value = data.groupId;
+        document.getElementById('primaryFirstName').value = data.primaryFirstName;
+        document.getElementById('primaryLastName').value = data.primaryLastName;
+        document.getElementById('whatsapp').value = data.whatsapp;
+        document.getElementById('email').value = data.email;
+        validateContactFields();
+        
+        // Handle Passport Requirement UI
+        document.getElementById('primaryId').required = false;
+        document.getElementById('idRequiredStar').classList.add('hidden');
+        if (data.primaryIdUrl) {
+            document.getElementById('primaryIdUrl').value = data.primaryIdUrl;
+            document.getElementById('idExistingNote').classList.remove('hidden');
+        }
+
+        // Arrival
+        document.querySelector(`input[name="arrMode"][value="${data.arrMode}"]`).checked = true;
+        toggleTransportFields('arr');
+        setTimeout(() => {
+            if(document.getElementById('arrNo')) document.getElementById('arrNo').value = data.arrNo;
+            if(document.getElementById('arrLoc')) document.getElementById('arrLoc').value = data.arrLoc;
+            if(document.getElementById('arrTerm')) document.getElementById('arrTerm').value = data.arrTerm;
+            if(data.arrFlightStatus && document.getElementById('arrFlightStatus')) {
+                document.getElementById('arrFlightStatus').value = data.arrFlightStatus;
+                const banner = document.getElementById('arrFlightStatusBanner');
+                if (banner) {
+                    banner.innerHTML = `
+                        <div class="p-2.5 bg-wedding-green-50 rounded-lg border border-wedding-green-200 text-xs text-wedding-green-900 flex items-center gap-2">
+                            <span>✈️</span>
+                            <span>Live Status: <strong>${data.arrFlightStatus}</strong></span>
+                        </div>
+                    `;
+                }
+            }
+        }, 100);
+        document.getElementById('arrDate').value = data.arrDate;
+        document.getElementById('arrTime').value = data.arrTime;
+
+        // Departure
+        document.querySelector(`input[name="depMode"][value="${data.depMode}"]`).checked = true;
+        toggleTransportFields('dep');
+        setTimeout(() => {
+            if(document.getElementById('depNo')) document.getElementById('depNo').value = data.depNo;
+            if(document.getElementById('depLoc')) document.getElementById('depLoc').value = data.depLoc;
+            if(document.getElementById('depTerm')) document.getElementById('depTerm').value = data.depTerm;
+            if(data.depFlightStatus && document.getElementById('depFlightStatus')) {
+                document.getElementById('depFlightStatus').value = data.depFlightStatus;
+                const banner = document.getElementById('depFlightStatusBanner');
+                if (banner) {
+                    banner.innerHTML = `
+                        <div class="p-2.5 bg-wedding-green-50 rounded-lg border border-wedding-green-200 text-xs text-wedding-green-900 flex items-center gap-2">
+                            <span>✈️</span>
+                            <span>Live Status: <strong>${data.depFlightStatus}</strong></span>
+                        </div>
+                    `;
+                }
+            }
+        }, 100);
+        document.getElementById('depDate').value = data.depDate;
+        document.getElementById('depTime').value = data.depTime;
+
+        // Clear existing additional guests and populate
+        document.getElementById('additionalGuestsContainer').innerHTML = '';
+        additionalGuestCount = 0;
+        
+        data.additionalGuests.forEach(g => {
+            addGuest();
+            const id = additionalGuestCount;
+            document.getElementById(`addFirstName-${id}`).value = g.firstName;
+            document.getElementById(`addLastName-${id}`).value = g.lastName;
+            document.getElementById(`addEmail-${id}`).value = g.email;
+            document.getElementById(`addWhatsapp-${id}`).value = g.whatsapp;
+            
+            document.getElementById(`addId-${id}`).required = false;
+            if (g.idUrl) {
+                document.getElementById(`addIdUrl-${id}`).value = g.idUrl;
+                document.getElementById(`idExistingNote-${id}`).classList.remove('hidden');
+            }
+        });
+
+        // Switch Tab to Submit (now acting as Edit)
+        switchTab('submit');
+        document.getElementById('submitBtnText').innerText = 'Save Changes';
+        document.getElementById('tab-submit').innerText = 'Edit Details';
+        document.getElementById('submitMessage').classList.add('hidden');
+    }
+</script>
