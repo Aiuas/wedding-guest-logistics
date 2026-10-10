@@ -618,7 +618,7 @@
                 } else {
                     // Render Status Block + Edit Button
                     let html = `<div class="p-5 bg-green-50 rounded-xl border border-green-100 mb-4">`;
-                    html += `<h3 class="font-serif text-xl text-green-900 mb-3">Your Booking was found!</h3>`;
+                    html += `<h3 class="font-serif text-xl text-green-900 mb-3">Your Travel Details were found!</h3>`;
 
                     // Show Arrival Status
                     if (response.arrDriver) {
@@ -648,7 +648,22 @@
                             </div>`;
                     }
 
-                    html += `<button onclick='loadEditForm(${JSON.stringify(response)})' class="mt-4 w-full bg-white text-green-700 border border-green-200 py-2 rounded-lg font-medium hover:bg-green-100 transition-colors">Edit Booking Details</button>`;
+                    // Show Passport / ID Status
+                    if (response.primaryIdUrl) {
+                        html += `<div class="mb-4"><h4 class="font-semibold text-sm mb-1 text-green-800">🪪 Passport / ID: Uploaded</h4>
+                        <p class="text-xs text-green-700">✓ On file with the hotel. You can upload a new one to replace it anytime.</p>
+                        </div>`;
+                    } else {
+                        html += `<div class="mb-4"><h4 class="font-semibold text-sm mb-1 text-amber-800">🪪 Passport / ID: Not Yet Uploaded</h4>
+                        <p class="text-xs text-amber-700">Required by the hotel for room check-in. Please submit prior to arrival.</p>
+                        </div>`;
+                    }
+
+                    html += `<button onclick='loadEditFormForId(${JSON.stringify(response)})' class="mt-4 w-full bg-wedding-green-600 text-white py-2.5 rounded-lg font-medium hover:bg-wedding-green-900 shadow transition-colors flex items-center justify-center gap-2">
+                        <span>🪪</span>
+                        <span>${response.primaryIdUrl ? 'Submit / Update Passport or ID' : 'Submit Passport / ID'}</span>
+                    </button>`;
+                    html += `<button onclick='loadEditForm(${JSON.stringify(response)})' class="mt-2.5 w-full bg-white text-green-700 border border-green-200 py-2.5 rounded-lg font-medium hover:bg-green-100 transition-colors">Edit Travel Details</button>`;
                     html += `</div>`;
 
                     resultEl.innerHTML = html;
@@ -765,6 +780,23 @@
         document.getElementById('submitBtnText').innerText = 'Save Changes';
         document.getElementById('tab-submit').innerText = 'Edit Details';
         document.getElementById('submitMessage').classList.add('hidden');
+    }
+
+    // Direct shortcut to edit form focusing on Passport / ID upload
+    function loadEditFormForId(data) {
+        loadEditForm(data);
+        setTimeout(() => {
+            const idEl = document.getElementById('primaryId');
+            if (idEl) {
+                idEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                idEl.focus();
+                const parent = idEl.closest('div');
+                if (parent) {
+                    parent.classList.add('ring-2', 'ring-wedding-pink-500', 'p-2', 'rounded-xl', 'transition-all');
+                    setTimeout(() => parent.classList.remove('ring-2', 'ring-wedding-pink-500', 'p-2'), 2500);
+                }
+            }
+        }, 150);
     }
 
     // Passport / ID Modal Handlers
