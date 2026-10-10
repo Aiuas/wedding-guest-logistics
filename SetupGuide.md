@@ -7,44 +7,34 @@ Follow these steps to deploy your custom wedding guest logistics app using Googl
 2. **Get the Folder ID:** Open the folder. Look at the URL in your browser: `https://drive.google.com/drive/folders/YOUR_FOLDER_ID`. Copy `YOUR_FOLDER_ID`.
 3. **Create a Google Sheet:** In your Google Drive, create a new Google Sheet. Name it `Wedding Logistics`.
 4. **Rename the Tab:** At the bottom, rename `Sheet1` to `Guest Data`.
-5. **Set up Columns:** The columns have been updated to support the new Group ID and Transport Mode features. 
-   **Copy the text below, single-click cell A1 in your sheet, and paste it. Then click Data > Split text to columns:**
+5. **Set up Columns:** The columns for `Guest Data` have been streamlined to 21 columns (A through U).
+   All vehicle management, driver assignments, and email notifications now live in the dedicated **Car Logistics** and **Car Fleet** tabs.
    
-   ```text
-5. ### 3. Setup the Columns
-Create the following columns in **Row 1** (A through AC, total 29 columns). **It is critical these are in this exact order.**
+   **Row 1 (Columns A through U, total 21 columns):**
+   
+   1. Timestamp (A)
+   2. Group ID (B)
+   3. First Name (C)
+   4. Last Name (D)
+   5. Email (E)
+   6. WhatsApp (F)
+   7. Arr Mode (G)
+   8. Arr Flight/Train No (H)
+   9. Arr Date (I)
+   10. Arr Time (J)
+   11. Arr Airport/Station (K)
+   12. Arr Terminal (L)
+   13. Dep Mode (M)
+   14. Dep Flight/Train No (N)
+   15. Dep Date (O)
+   16. Dep Time (P)
+   17. Dep Airport/Station (Q)
+   18. Dep Terminal (R)
+   19. ID Link (S)
+   20. Flight Status (Arrival) (T)
+   21. Flight Status (Departure) (U)
 
-1. Timestamp
-2. Group ID
-3. First Name
-4. Last Name
-5. Email
-6. WhatsApp
-7. Arr Transport Mode
-8. Arr Transport No
-9. Arr Date
-10. Arr Time
-11. Arr Location
-12. Arr Terminal
-13. Dep Transport Mode
-14. Dep Transport No
-15. Dep Date
-16. Dep Time
-17. Dep Location
-18. Dep Terminal
-19. ID Link
-20. Assigned Driver (Arrival)
-21. Driver Phone (Arrival)
-22. Car Details (Arrival)
-23. Send Arrival Email [Checkbox]
-24. Arrival Email Status
-25. Assigned Driver (Departure)
-26. Driver Phone (Departure)
-27. Car Details (Departure)
-28. Send Departure Email [Checkbox]
-29. Departure Email Status
-
-*(Tip: In your sheet, select Column W (23) and Column AB (28) starting from row 2 downwards, and click **Insert > Checkbox** so each row has an easy 1-click send button! When clicked, it automatically sends the email and unchecks itself.)*
+*(Tip: In Google Sheets, you can automatically initialize or migrate these columns anytime by clicking **Wedding Logistics > 🔄 Reorganize Guest Data Tab (Move Flight Status to T & U)** from the custom menu.)*
 
 ### 4. Create the Web App Backend
 1. In your Google Sheet, click on **Extensions > Apps Script**.
