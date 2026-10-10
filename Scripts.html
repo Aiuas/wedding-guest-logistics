@@ -563,7 +563,7 @@
         runApi('fetchBooking', { query: query },
             function (response) {
                 btn.disabled = false;
-                btnText.innerText = 'Find Booking';
+                btnText.innerText = 'Find Details';
                 loader.classList.add('hidden');
 
                 resultEl.classList.remove('hidden');
@@ -615,7 +615,7 @@
             },
             function (error) {
                 btn.disabled = false;
-                btnText.innerText = 'Find Booking';
+                btnText.innerText = 'Find Details';
                 loader.classList.add('hidden');
 
                 resultEl.classList.remove('hidden');
