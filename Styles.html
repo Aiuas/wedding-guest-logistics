@@ -1,5 +1,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
 
 <script>
     tailwind.config = {
@@ -38,6 +40,7 @@
         min-height: 100vh;
         position: relative;
     }
+
     .glass-card {
         background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(12px);
@@ -45,27 +48,40 @@
         border: 1px solid rgba(255, 255, 255, 0.5);
         box-shadow: 0 8px 32px 0 rgba(155, 176, 131, 0.2);
     }
+
     .fade-in {
         animation: fadeIn 0.4s ease-in-out;
     }
+
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
+
     .loader {
-        border: 3px solid rgba(255, 255, 255, 0.3);
-        border-top: 3px solid #ffffff;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #7d9365;
         border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        animation: spin 0.8s linear infinite;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
         display: inline-block;
     }
+
     @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    .animate-spin {
-        animation: spin 0.8s linear infinite;
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 </style>

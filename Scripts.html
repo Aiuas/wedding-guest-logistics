@@ -47,12 +47,12 @@
                     method: 'POST',
                     body: JSON.stringify({ action: action, payload: payload })
                 })
-                .then(res => res.json())
-                .then(data => onSuccess(data))
-                .catch(err => {
-                    console.error('API Error:', err);
-                    onFailure(err);
-                });
+                    .then(res => res.json())
+                    .then(data => onSuccess(data))
+                    .catch(err => {
+                        console.error('API Error:', err);
+                        onFailure(err);
+                    });
             }
         }
     }
@@ -94,7 +94,7 @@
         const mode = document.querySelector(`input[name="${type}Mode"]:checked`).value;
         const container = document.getElementById(`dynamic${type === 'arr' ? 'Arr' : 'Dep'}Fields`);
         const prefix = type; // 'arr' or 'dep'
-        
+
         if (mode === 'Flight') {
             container.innerHTML = `
                 <div class="md:col-span-2" id="${prefix}FlightStatusBanner">
@@ -191,18 +191,18 @@
         const loadingEl = document.getElementById(`${prefix}FlightLoading`);
         const bannerEl = document.getElementById(`${prefix}FlightStatusBanner`);
         const hiddenStatusEl = document.getElementById(`${prefix}FlightStatus`);
-        
+
         if (!flightInput || !dateInput) return;
-        
+
         const rawFlightNo = flightInput.value.trim().toUpperCase();
         const cleanFlightNo = rawFlightNo.replace(/[^A-Z0-9]/g, '');
         const flightDate = dateInput.value;
-        
+
         if (cleanFlightNo.length < 3) return;
-        
+
         const lookupKey = `${prefix}_${cleanFlightNo}_${flightDate}`;
         if (lastLookedUpFlights[prefix] === lookupKey) return;
-        
+
         if (loadingEl) loadingEl.classList.remove('hidden');
         if (bannerEl) {
             bannerEl.innerHTML = `
@@ -212,15 +212,15 @@
                 </div>
             `;
         }
-        
+
         runApi('lookupFlight', { flightNo: cleanFlightNo, date: flightDate, prefix: prefix },
-            function(res) {
+            function (res) {
                 if (loadingEl) loadingEl.classList.add('hidden');
                 if (!res) return;
-                
+
                 if (res.success) {
                     lastLookedUpFlights[prefix] = lookupKey;
-                    
+
                     // Auto-fill time
                     const timeInput = document.getElementById(`${prefix}Time`);
                     if (timeInput && res.time) {
@@ -228,13 +228,13 @@
                         timeInput.classList.add('bg-green-50');
                         setTimeout(() => timeInput.classList.remove('bg-green-50'), 1500);
                     }
-                    
+
                     // Auto-fill terminal
                     const termInput = document.getElementById(`${prefix}Term`);
                     if (termInput && res.terminal) {
                         termInput.value = res.terminal;
                     }
-                    
+
                     // Auto-select airport if matched or add option
                     const locSelect = document.getElementById(`${prefix}Loc`);
                     if (locSelect && (res.airportIata || res.airportName)) {
@@ -255,12 +255,12 @@
                             locSelect.value = optVal;
                         }
                     }
-                    
+
                     // Store status in hidden input
                     if (hiddenStatusEl && res.statusSummary) {
                         hiddenStatusEl.value = res.displayBadge || res.statusSummary;
                     }
-                    
+
                     // Render success badge with operating carrier and potential codeshares
                     if (bannerEl) {
                         const codesharePills = (res.codeshares && res.codeshares.length > 0)
@@ -319,7 +319,7 @@
                     }
                 }
             },
-            function(err) {
+            function (err) {
                 if (loadingEl) loadingEl.classList.add('hidden');
                 if (bannerEl) {
                     bannerEl.innerHTML = `
@@ -361,7 +361,7 @@
     function addGuest() {
         additionalGuestCount++;
         const container = document.getElementById('additionalGuestsContainer');
-        
+
         const guestHtml = `
             <div class="p-4 bg-wedding-green-50 rounded-xl relative border border-wedding-green-100" id="guest-${additionalGuestCount}">
                 <button type="button" onclick="removeGuest(${additionalGuestCount})" class="absolute top-2 right-2 text-gray-400 hover:text-red-500">
@@ -393,7 +393,7 @@
                 </div>
             </div>
         `;
-        
+
         container.insertAdjacentHTML('beforeend', guestHtml);
     }
 
@@ -422,7 +422,7 @@
     // Main Submit Form
     async function submitForm(e) {
         e.preventDefault();
-        
+
         const btn = document.getElementById('submitBtn');
         const btnText = document.getElementById('submitBtnText');
         const loader = document.getElementById('submitLoader');
@@ -438,7 +438,7 @@
             document.getElementById('whatsapp').focus();
             return;
         }
-        
+
         btn.disabled = true;
         btnText.innerText = 'Saving...';
         loader.classList.remove('hidden');
@@ -454,12 +454,12 @@
                 primaryLastName: document.getElementById('primaryLastName').value,
                 email: document.getElementById('email').value,
                 whatsapp: document.getElementById('whatsapp').value,
-                
+
                 primaryIdData: primaryFileObj ? primaryFileObj.data : null,
                 primaryIdName: primaryFileObj ? primaryFileObj.name : null,
                 primaryIdMimeType: primaryFileObj ? primaryFileObj.mimeType : null,
                 primaryIdUrl: document.getElementById('primaryIdUrl').value,
-                
+
                 arrMode: document.querySelector('input[name="arrMode"]:checked').value,
                 arrNo: document.getElementById('arrNo') ? document.getElementById('arrNo').value : '',
                 arrLoc: document.getElementById('arrLoc') ? document.getElementById('arrLoc').value : '',
@@ -475,7 +475,7 @@
                 depDate: document.getElementById('depDate').value,
                 depTime: document.getElementById('depTime').value,
                 depFlightStatus: document.getElementById('depFlightStatus') ? document.getElementById('depFlightStatus').value : '',
-                
+
                 additionalGuests: []
             };
 
@@ -485,7 +485,7 @@
                     const idEl = document.getElementById(`addId-${i}`);
                     const idUrlEl = document.getElementById(`addIdUrl-${i}`);
                     const guestFileObj = (idEl && idEl.files.length > 0) ? await getBase64(idEl.files[0]) : null;
-                    
+
                     formData.additionalGuests.push({
                         firstName: firstNameEl.value,
                         lastName: document.getElementById(`addLastName-${i}`).value,
@@ -500,11 +500,11 @@
             }
 
             runApi('processForm', formData,
-                function(response) {
+                function (response) {
                     btn.disabled = false;
                     btnText.innerText = document.getElementById('groupId').value ? 'Save Changes' : 'Submit Details';
                     loader.classList.add('hidden');
-                    
+
                     msgEl.classList.remove('hidden');
                     if (response.success) {
                         msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-green-50 text-green-700';
@@ -523,11 +523,11 @@
                         msgEl.innerText = 'Error: ' + response.message;
                     }
                 },
-                function(error) {
+                function (error) {
                     btn.disabled = false;
                     btnText.innerText = document.getElementById('groupId').value ? 'Save Changes' : 'Submit Details';
                     loader.classList.add('hidden');
-                    
+
                     msgEl.classList.remove('hidden');
                     msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-red-50 text-red-700';
                     msgEl.innerText = 'Connection error. Please try again.';
@@ -538,7 +538,7 @@
             btn.disabled = false;
             btnText.innerText = document.getElementById('groupId').value ? 'Save Changes' : 'Submit Details';
             loader.classList.add('hidden');
-            
+
             msgEl.classList.remove('hidden');
             msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-red-50 text-red-700';
             msgEl.innerText = 'Error processing files. Please ensure they are not too large.';
@@ -561,13 +561,13 @@
         resultEl.classList.add('hidden');
 
         runApi('fetchBooking', { query: query },
-            function(response) {
+            function (response) {
                 btn.disabled = false;
-                btnText.innerText = 'Find Details';
+                btnText.innerText = 'Find Booking';
                 loader.classList.add('hidden');
-                
+
                 resultEl.classList.remove('hidden');
-                
+
                 if (!response.found) {
                     resultEl.innerHTML = `
                         <div class="p-4 bg-orange-50 rounded-xl border border-orange-100 text-orange-800 text-center">
@@ -578,10 +578,10 @@
                     // Render Status Block + Edit Button
                     let html = `<div class="p-5 bg-green-50 rounded-xl border border-green-100 mb-4">`;
                     html += `<h3 class="font-serif text-xl text-green-900 mb-3">Your Booking was found!</h3>`;
-                    
+
                     // Show Arrival Status
                     if (response.arrDriver) {
-                        const cleanArr = response.arrPhone ? response.arrPhone.toString().replace(/\\D/g,'') : '';
+                        const cleanArr = response.arrPhone ? response.arrPhone.toString().replace(/\\D/g, '') : '';
                         html += `<div class="mb-4"><h4 class="font-semibold text-sm mb-1 text-green-800">🛬 Arrival Transport Organized</h4>
                             <p class="text-sm text-green-700">Driver: ${response.arrDriver} | Car: ${response.arrCar}</p>
                             ${cleanArr ? `<a href="https://wa.me/${cleanArr}" target="_blank" class="text-green-600 underline text-sm">WhatsApp Driver</a>` : ''}
@@ -592,10 +592,10 @@
                             ${response.arrFlightStatus ? `<p class="text-xs text-green-800 mt-1 font-medium bg-green-100/60 p-1.5 rounded inline-block">✈️ ${response.arrFlightStatus}</p>` : ''}
                             </div>`;
                     }
-                    
+
                     // Show Departure Status
                     if (response.depDriver) {
-                        const cleanDep = response.depPhone ? response.depPhone.toString().replace(/\\D/g,'') : '';
+                        const cleanDep = response.depPhone ? response.depPhone.toString().replace(/\\D/g, '') : '';
                         html += `<div class="mb-4"><h4 class="font-semibold text-sm mb-1 text-green-800">🛫 Departure Transport Organized</h4>
                             <p class="text-sm text-green-700">Driver: ${response.depDriver} | Car: ${response.depCar}</p>
                             ${cleanDep ? `<a href="https://wa.me/${cleanDep}" target="_blank" class="text-green-600 underline text-sm">WhatsApp Driver</a>` : ''}
@@ -606,18 +606,18 @@
                             ${response.depFlightStatus ? `<p class="text-xs text-green-800 mt-1 font-medium bg-green-100/60 p-1.5 rounded inline-block">✈️ ${response.depFlightStatus}</p>` : ''}
                             </div>`;
                     }
-                    
+
                     html += `<button onclick='loadEditForm(${JSON.stringify(response)})' class="mt-4 w-full bg-white text-green-700 border border-green-200 py-2 rounded-lg font-medium hover:bg-green-100 transition-colors">Edit Booking Details</button>`;
                     html += `</div>`;
-                    
+
                     resultEl.innerHTML = html;
                 }
             },
-            function(error) {
+            function (error) {
                 btn.disabled = false;
-                btnText.innerText = 'Find Details';
+                btnText.innerText = 'Find Booking';
                 loader.classList.add('hidden');
-                
+
                 resultEl.classList.remove('hidden');
                 resultEl.innerHTML = `
                     <div class="p-4 bg-red-50 rounded-xl border border-red-100 text-red-800 text-center">
@@ -636,7 +636,7 @@
         document.getElementById('whatsapp').value = data.whatsapp;
         document.getElementById('email').value = data.email;
         validateContactFields();
-        
+
         // Handle Passport Requirement UI
         document.getElementById('primaryId').required = false;
         document.getElementById('idRequiredStar').classList.add('hidden');
@@ -649,10 +649,10 @@
         document.querySelector(`input[name="arrMode"][value="${data.arrMode}"]`).checked = true;
         toggleTransportFields('arr');
         setTimeout(() => {
-            if(document.getElementById('arrNo')) document.getElementById('arrNo').value = data.arrNo;
-            if(document.getElementById('arrLoc')) document.getElementById('arrLoc').value = data.arrLoc;
-            if(document.getElementById('arrTerm')) document.getElementById('arrTerm').value = data.arrTerm;
-            if(data.arrFlightStatus && document.getElementById('arrFlightStatus')) {
+            if (document.getElementById('arrNo')) document.getElementById('arrNo').value = data.arrNo;
+            if (document.getElementById('arrLoc')) document.getElementById('arrLoc').value = data.arrLoc;
+            if (document.getElementById('arrTerm')) document.getElementById('arrTerm').value = data.arrTerm;
+            if (data.arrFlightStatus && document.getElementById('arrFlightStatus')) {
                 document.getElementById('arrFlightStatus').value = data.arrFlightStatus;
                 const banner = document.getElementById('arrFlightStatusBanner');
                 if (banner) {
@@ -672,10 +672,10 @@
         document.querySelector(`input[name="depMode"][value="${data.depMode}"]`).checked = true;
         toggleTransportFields('dep');
         setTimeout(() => {
-            if(document.getElementById('depNo')) document.getElementById('depNo').value = data.depNo;
-            if(document.getElementById('depLoc')) document.getElementById('depLoc').value = data.depLoc;
-            if(document.getElementById('depTerm')) document.getElementById('depTerm').value = data.depTerm;
-            if(data.depFlightStatus && document.getElementById('depFlightStatus')) {
+            if (document.getElementById('depNo')) document.getElementById('depNo').value = data.depNo;
+            if (document.getElementById('depLoc')) document.getElementById('depLoc').value = data.depLoc;
+            if (document.getElementById('depTerm')) document.getElementById('depTerm').value = data.depTerm;
+            if (data.depFlightStatus && document.getElementById('depFlightStatus')) {
                 document.getElementById('depFlightStatus').value = data.depFlightStatus;
                 const banner = document.getElementById('depFlightStatusBanner');
                 if (banner) {
@@ -694,7 +694,7 @@
         // Clear existing additional guests and populate
         document.getElementById('additionalGuestsContainer').innerHTML = '';
         additionalGuestCount = 0;
-        
+
         data.additionalGuests.forEach(g => {
             addGuest();
             const id = additionalGuestCount;
@@ -702,7 +702,7 @@
             document.getElementById(`addLastName-${id}`).value = g.lastName;
             document.getElementById(`addEmail-${id}`).value = g.email;
             document.getElementById(`addWhatsapp-${id}`).value = g.whatsapp;
-            
+
             document.getElementById(`addId-${id}`).required = false;
             if (g.idUrl) {
                 document.getElementById(`addIdUrl-${id}`).value = g.idUrl;
