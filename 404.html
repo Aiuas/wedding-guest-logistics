@@ -451,6 +451,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-1">Email or WhatsApp Number</label>
                     <input type="text" id="statusQuery" placeholder="guest@example.com or +1234567890"
+                        onkeydown="if(event.key === 'Enter'){ event.preventDefault(); checkStatus(); }"
                         class="w-full rounded-lg border-gray-300 border p-2.5 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none transition-colors">
                 </div>
 
@@ -1105,23 +1106,49 @@
                         msgEl.classList.remove('hidden');
                         if (response.success) {
                             msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-green-50 text-green-700';
+                            const successMsg = response.message || (formData.groupId ? 'Details updated successfully!' : 'Details submitted successfully!');
                             if (missingGuests.length > 0) {
-                                msgEl.innerHTML = `<strong>${response.message}</strong><div class="text-xs text-wedding-green-800 mt-1 font-normal">Reminder: Since passport / ID was not uploaded, you can provide it anytime later before your arrival using the Find Your Details tab.</div>`;
+                                msgEl.innerHTML = `<strong>${successMsg}</strong><div class="text-xs text-wedding-green-800 mt-1 font-normal">Redirecting to Find Your Details where you can view your status and upload your ID anytime...</div>`;
                             } else {
-                                msgEl.innerText = response.message;
+                                msgEl.innerHTML = `<strong>${successMsg}</strong><div class="text-xs text-wedding-green-800 mt-1 font-normal">Redirecting you to Find Your Details...</div>`;
                             }
-                            if (!formData.groupId) {
+
+                            // Capture contact for Find Your Details lookup
+                            const contactToLookup = (formData.email ? formData.email.trim() : (formData.whatsapp ? formData.whatsapp.trim() : ''));
+
+                            setTimeout(() => {
+                                // Reset form and edit state
                                 document.getElementById('logisticsForm').reset();
+                                document.getElementById('groupId').value = '';
+                                document.getElementById('tab-submit').innerText = 'Submit Details';
+                                document.getElementById('submitBtnText').innerText = 'Submit Details';
                                 document.getElementById('arrDate').value = '2026-11-24';
                                 document.getElementById('depDate').value = '2026-11-26';
                                 document.getElementById('additionalGuestsContainer').innerHTML = '';
+                                additionalGuestCount = 0;
                                 document.getElementById('primaryIdUrl').value = '';
                                 document.getElementById('idExistingNote').classList.add('hidden');
                                 document.getElementById('idRequiredStar').classList.remove('hidden');
+                                if (document.getElementById('arrFlightStatusBanner')) document.getElementById('arrFlightStatusBanner').innerHTML = '';
+                                if (document.getElementById('depFlightStatusBanner')) document.getElementById('depFlightStatusBanner').innerHTML = '';
+                                if (document.getElementById('arrFlightStatus')) document.getElementById('arrFlightStatus').value = '';
+                                if (document.getElementById('depFlightStatus')) document.getElementById('depFlightStatus').value = '';
                                 validateContactFields();
                                 toggleTransportFields('arr');
                                 toggleTransportFields('dep');
-                            }
+                                msgEl.classList.add('hidden');
+
+                                // Redirect to Find Your Details tab
+                                switchTab('status');
+                                const statusView = document.getElementById('view-status');
+                                if (statusView) {
+                                    statusView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+
+                                if (contactToLookup) {
+                                    checkStatus(contactToLookup, successMsg);
+                                }
+                            }, 1200);
                         } else {
                             msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-red-50 text-red-700';
                             msgEl.innerText = 'Error: ' + response.message;
@@ -1150,8 +1177,12 @@
         }
 
         // Fetch Booking for Editing / Status
-        function checkStatus() {
-            const query = document.getElementById('statusQuery').value;
+        function checkStatus(customQuery, successBanner) {
+            if (customQuery) {
+                const queryInput = document.getElementById('statusQuery');
+                if (queryInput) queryInput.value = customQuery;
+            }
+            const query = (document.getElementById('statusQuery') ? document.getElementById('statusQuery').value : '').trim();
             if (!query) return;
 
             const btn = document.getElementById('statusBtn');
@@ -1180,7 +1211,14 @@
                     `;
                     } else {
                         // Render Status Block + Edit Button
-                        let html = `<div class="p-5 bg-green-50 rounded-xl border border-green-100 mb-4">`;
+                        let html = '';
+                        if (successBanner) {
+                            html += `<div class="p-4 bg-wedding-green-50 rounded-xl border border-wedding-green-200 text-wedding-green-900 mb-4 text-center font-medium shadow-xs flex items-center justify-center gap-2">
+                                <span class="text-base">🎉</span>
+                                <span>${successBanner}</span>
+                            </div>`;
+                        }
+                        html += `<div class="p-5 bg-green-50 rounded-xl border border-green-100 mb-4">`;
                         html += `<h3 class="font-serif text-xl text-green-900 mb-3">Your Travel Details were found!</h3>`;
 
                         // Show Arrival Status
