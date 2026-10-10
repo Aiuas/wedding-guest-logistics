@@ -141,6 +141,21 @@
                 filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 6px rgba(254, 240, 138, 0.8));
             }
         }
+        /* Modal dialog styling */
+        dialog#idWarningModal {
+            border: 1px solid rgba(244, 166, 188, 0.4);
+            border-radius: 1.25rem;
+            padding: 0;
+            max-width: 28rem;
+            width: 92%;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        dialog#idWarningModal::backdrop {
+            background: rgba(40, 50, 35, 0.45);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
     </style>
 
 </head>
@@ -260,7 +275,7 @@
                         <label class="block text-sm font-medium mb-1">Passport / ID Upload <span
                                 id="idRequiredStar">*</span></label>
                         <p class="text-xs text-gray-500 mb-2">Required by the hotel for check-in. (e.g. Passport, Indian
-                            ID, Aadhaar)</p>
+                            ID, Aadhaar) &bull; <span class="text-wedding-green-900 font-medium">Not comfortable uploading now? You can also submit and provide it later.</span></p>
                         <input type="file" id="primaryId" accept="image/*,.pdf"
                             class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-wedding-pink-100 file:text-wedding-pink-900 hover:file:bg-wedding-pink-500 hover:file:text-white transition-colors">
                         <p id="idExistingNote" class="text-xs text-wedding-green-600 mt-2 hidden">✓ ID already on file.
@@ -467,6 +482,57 @@
         </div>
 
     </div>
+
+    <!-- Passport / ID Notice Modal -->
+    <dialog id="idWarningModal" class="rounded-2xl p-0 shadow-2xl backdrop:bg-black/45 backdrop:backdrop-blur-sm max-w-md w-[92%] border border-wedding-pink-200 bg-white text-gray-800">
+        <div class="relative p-6 sm:p-7">
+            <!-- Close icon -->
+            <button type="button" onclick="document.getElementById('idWarningModal').close()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors" aria-label="Close dialog">
+                <span class="text-xl leading-none">&times;</span>
+            </button>
+
+            <!-- Icon Header -->
+            <div class="flex items-center justify-center mb-3">
+                <div class="w-14 h-14 rounded-full bg-wedding-pink-100 flex items-center justify-center text-wedding-pink-900 border border-wedding-pink-200 shadow-inner">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Title -->
+            <h3 class="font-serif text-2xl text-wedding-green-900 text-center font-bold mb-2">
+                Hotel Check-in Identification
+            </h3>
+
+            <!-- Explanation & Reassurance -->
+            <p class="text-sm text-gray-600 text-center leading-relaxed mb-4">
+                A passport or government-issued photo ID (e.g. Passport, Aadhaar, Driver's License) is required by the hotel for room check-in.
+            </p>
+
+            <div class="bg-wedding-pink-50 border border-wedding-pink-200 rounded-xl p-3.5 mb-4 text-xs text-wedding-pink-900 leading-relaxed text-center">
+                <p class="font-semibold mb-1">Not comfortable uploading right now, or don't have it handy?</p>
+                <p class="text-wedding-green-900">
+                    No problem at all! You are welcome to submit your travel details today and upload your ID anytime later before your arrival using the <strong>Manage Booking</strong> tab.
+                </p>
+            </div>
+
+            <div id="idMissingNamesList" class="text-center mb-5"></div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col-reverse sm:flex-row gap-2.5">
+                <button type="button" onclick="dismissIdModalAndFocus()"
+                    class="w-full sm:w-1/2 py-2.5 px-4 rounded-xl border-2 border-wedding-green-600 text-wedding-green-900 font-medium hover:bg-wedding-green-50 transition-colors text-center text-sm">
+                    Upload ID Now
+                </button>
+                <button type="button" onclick="proceedSubmitWithoutId()"
+                    class="w-full sm:w-1/2 py-2.5 px-4 rounded-xl bg-wedding-green-600 text-white font-medium hover:bg-wedding-green-900 shadow-md transition-colors text-center text-sm flex items-center justify-center gap-1">
+                    <span>Submit & Upload Later</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </div>
+    </dialog>
 
     <script>
         let additionalGuestCount = 0;
@@ -855,7 +921,8 @@
                         <input type="email" id="addEmail-${additionalGuestCount}" placeholder="guest@example.com" class="w-full rounded-lg border-gray-300 border p-2 focus:ring-wedding-pink-500 focus:border-wedding-pink-500 outline-none">
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium mb-1">Passport / ID Upload <span id="idRequiredStar-${additionalGuestCount}" class="hidden">*</span></label>
+                        <label class="block text-sm font-medium mb-1">Passport / ID Upload <span id="idRequiredStar-${additionalGuestCount}">*</span></label>
+                        <p class="text-xs text-gray-500 mb-2">Required by the hotel for check-in. (e.g. Passport, Indian ID, Aadhaar) &bull; <span class="text-wedding-green-900 font-medium">Not comfortable uploading now? You can also submit and provide it later.</span></p>
                         <input type="hidden" id="addIdUrl-${additionalGuestCount}" value="">
                         <input type="file" id="addId-${additionalGuestCount}" accept="image/*,.pdf" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-wedding-pink-100 file:text-wedding-pink-900 hover:file:bg-wedding-pink-500 hover:file:text-white transition-colors">
                         <p id="idExistingNote-${additionalGuestCount}" class="text-xs text-wedding-green-600 mt-2 hidden">✓ ID already on file. Uploading a new one will replace it.</p>
@@ -890,8 +957,8 @@
         }
 
         // Main Submit Form
-        async function submitForm(e) {
-            e.preventDefault();
+        async function submitForm(e, allowSkipId = false) {
+            if (e && e.preventDefault) e.preventDefault();
 
             const btn = document.getElementById('submitBtn');
             const btnText = document.getElementById('submitBtnText');
@@ -909,14 +976,47 @@
                 return;
             }
 
+            // Check Passport / ID requirements
+            const primaryFileEl = document.getElementById('primaryId');
+            const primaryHasFile = primaryFileEl && primaryFileEl.files && primaryFileEl.files.length > 0;
+            const primaryHasUrl = document.getElementById('primaryIdUrl') && document.getElementById('primaryIdUrl').value.trim() !== '';
+            const isPrimaryMissingId = !primaryHasFile && !primaryHasUrl;
+
+            const missingGuests = [];
+            if (isPrimaryMissingId) {
+                const pFirst = (document.getElementById('primaryFirstName') ? document.getElementById('primaryFirstName').value.trim() : '') || 'Primary Guest';
+                missingGuests.push({ name: pFirst, elementId: 'primaryId' });
+            }
+
+            for (let i = 1; i <= additionalGuestCount; i++) {
+                const firstNameEl = document.getElementById(`addFirstName-${i}`);
+                if (firstNameEl && firstNameEl.value.trim() !== '') {
+                    const addFileEl = document.getElementById(`addId-${i}`);
+                    const addUrlEl = document.getElementById(`addIdUrl-${i}`);
+                    const hasFile = addFileEl && addFileEl.files && addFileEl.files.length > 0;
+                    const hasUrl = addUrlEl && addUrlEl.value.trim() !== '';
+                    if (!hasFile && !hasUrl) {
+                        const lastName = document.getElementById(`addLastName-${i}`) ? document.getElementById(`addLastName-${i}`).value.trim() : '';
+                        missingGuests.push({
+                            name: `${firstNameEl.value.trim()} ${lastName}`.trim(),
+                            elementId: `addId-${i}`
+                        });
+                    }
+                }
+            }
+
+            if (!allowSkipId && missingGuests.length > 0) {
+                openIdWarningModal(missingGuests);
+                return;
+            }
+
             btn.disabled = true;
             btnText.innerText = 'Saving...';
             loader.classList.remove('hidden');
             msgEl.classList.add('hidden');
 
             try {
-                const primaryFileEl = document.getElementById('primaryId');
-                const primaryFileObj = primaryFileEl.files.length > 0 ? await getBase64(primaryFileEl.files[0]) : null;
+                const primaryFileObj = primaryFileEl && primaryFileEl.files.length > 0 ? await getBase64(primaryFileEl.files[0]) : null;
 
                 const formData = {
                     groupId: document.getElementById('groupId').value,
@@ -978,12 +1078,19 @@
                         msgEl.classList.remove('hidden');
                         if (response.success) {
                             msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-green-50 text-green-700';
-                            msgEl.innerText = response.message;
+                            if (missingGuests.length > 0) {
+                                msgEl.innerHTML = `<strong>${response.message}</strong><div class="text-xs text-wedding-green-800 mt-1 font-normal">Reminder: Since passport / ID was not uploaded, you can provide it anytime later before your arrival using the Manage Booking tab.</div>`;
+                            } else {
+                                msgEl.innerText = response.message;
+                            }
                             if (!formData.groupId) {
                                 document.getElementById('logisticsForm').reset();
                                 document.getElementById('arrDate').value = '2026-11-24';
                                 document.getElementById('depDate').value = '2026-11-26';
                                 document.getElementById('additionalGuestsContainer').innerHTML = '';
+                                document.getElementById('primaryIdUrl').value = '';
+                                document.getElementById('idExistingNote').classList.add('hidden');
+                                document.getElementById('idRequiredStar').classList.remove('hidden');
                                 validateContactFields();
                                 toggleTransportFields('arr');
                                 toggleTransportFields('dep');
@@ -1108,11 +1215,14 @@
             validateContactFields();
 
             // Handle Passport Requirement UI
-            document.getElementById('primaryId').required = false;
-            document.getElementById('idRequiredStar').classList.add('hidden');
             if (data.primaryIdUrl) {
                 document.getElementById('primaryIdUrl').value = data.primaryIdUrl;
                 document.getElementById('idExistingNote').classList.remove('hidden');
+                document.getElementById('idRequiredStar').classList.add('hidden');
+            } else {
+                document.getElementById('primaryIdUrl').value = '';
+                document.getElementById('idExistingNote').classList.add('hidden');
+                document.getElementById('idRequiredStar').classList.remove('hidden');
             }
 
             // Arrival
@@ -1173,10 +1283,16 @@
                 document.getElementById(`addEmail-${id}`).value = g.email;
                 document.getElementById(`addWhatsapp-${id}`).value = g.whatsapp;
 
-                document.getElementById(`addId-${id}`).required = false;
                 if (g.idUrl) {
                     document.getElementById(`addIdUrl-${id}`).value = g.idUrl;
                     document.getElementById(`idExistingNote-${id}`).classList.remove('hidden');
+                    const star = document.getElementById(`idRequiredStar-${id}`);
+                    if (star) star.classList.add('hidden');
+                } else {
+                    document.getElementById(`addIdUrl-${id}`).value = '';
+                    document.getElementById(`idExistingNote-${id}`).classList.add('hidden');
+                    const star = document.getElementById(`idRequiredStar-${id}`);
+                    if (star) star.classList.remove('hidden');
                 }
             });
 
@@ -1186,6 +1302,72 @@
             document.getElementById('tab-submit').innerText = 'Edit Details';
             document.getElementById('submitMessage').classList.add('hidden');
         }
+
+        // Passport / ID Modal Handlers
+        function openIdWarningModal(missingGuests) {
+            const modal = document.getElementById('idWarningModal');
+            if (!modal) return;
+
+            modal.dataset.firstMissingId = missingGuests[0].elementId;
+            const namesListEl = document.getElementById('idMissingNamesList');
+            if (namesListEl) {
+                if (missingGuests.length === 1 && missingGuests[0].elementId === 'primaryId') {
+                    namesListEl.innerHTML = `<span class="inline-block bg-wedding-pink-100 text-wedding-pink-900 px-3 py-1 rounded-full text-xs font-medium">Primary Guest ID not uploaded</span>`;
+                } else {
+                    const names = missingGuests.map(g => `<span class="inline-block bg-wedding-pink-100 text-wedding-pink-900 px-2.5 py-0.5 rounded-full text-xs font-medium mr-1 mb-1">${g.name}</span>`).join(' ');
+                    namesListEl.innerHTML = `<div class="text-xs text-gray-500 mb-1.5">ID currently missing for:</div><div class="flex flex-wrap justify-center gap-1">${names}</div>`;
+                }
+            }
+
+            if (typeof modal.showModal === 'function') {
+                modal.showModal();
+            } else {
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function dismissIdModalAndFocus() {
+            const modal = document.getElementById('idWarningModal');
+            if (modal) modal.close();
+
+            const targetId = (modal && modal.dataset.firstMissingId) || 'primaryId';
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                targetEl.focus();
+                const parent = targetEl.closest('div');
+                if (parent) {
+                    parent.classList.add('ring-2', 'ring-wedding-pink-500', 'p-2', 'rounded-xl', 'transition-all');
+                    setTimeout(() => {
+                        parent.classList.remove('ring-2', 'ring-wedding-pink-500', 'p-2');
+                    }, 2500);
+                }
+            }
+        }
+
+        function proceedSubmitWithoutId() {
+            const modal = document.getElementById('idWarningModal');
+            if (modal) modal.close();
+            submitForm(null, true);
+        }
+
+        // Close modal when clicking outside on backdrop
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('idWarningModal');
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    const rect = modal.getBoundingClientRect();
+                    if (
+                        e.clientX < rect.left ||
+                        e.clientX > rect.right ||
+                        e.clientY < rect.top ||
+                        e.clientY > rect.bottom
+                    ) {
+                        modal.close();
+                    }
+                });
+            }
+        });
     </script>
 
 
