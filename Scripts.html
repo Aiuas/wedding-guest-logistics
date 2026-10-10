@@ -543,7 +543,7 @@
                     if (response.success) {
                         msgEl.className = 'mt-4 text-center text-sm font-medium p-4 rounded-lg bg-green-50 text-green-700';
                         if (missingGuests.length > 0) {
-                            msgEl.innerHTML = `<strong>${response.message}</strong><div class="text-xs text-wedding-green-800 mt-1 font-normal">Reminder: Since passport / ID was not uploaded, you can provide it anytime later before your arrival using the Manage Booking tab.</div>`;
+                            msgEl.innerHTML = `<strong>${response.message}</strong><div class="text-xs text-wedding-green-800 mt-1 font-normal">Reminder: Since passport / ID was not uploaded, you can provide it anytime later before your arrival using the Find Your Details tab.</div>`;
                         } else {
                             msgEl.innerText = response.message;
                         }
